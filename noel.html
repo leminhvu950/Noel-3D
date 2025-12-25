@@ -131,7 +131,7 @@
                 Thêm ảnh
                 <input type="file" id="file-input" multiple accept="image/*">
             </label>
-            <div class="hint-text">Thêm ảnh của bạn vào đây <br>Nhấn 'H' để ẩn thông báo</div>
+            <div class="hint-text">hãy chọn những tấm ảnh đẹp nhất của bạn<br>Nhấn 'H' để ẩn thông báo</div>
         </div>
     </div>
 
@@ -210,10 +210,8 @@
                 setTimeout(() => loader.remove(), 800);
                 console.log('✅ App đã sẵn sàng!');
                 
-                // Tải ảnh embedded cho web deployment
-                setTimeout(() => {
-                    loadEmbeddedImagesForWeb();
-                }, 1000);
+                // Không tải ảnh tự động - chỉ cho phép upload thủ công
+                console.log('✅ Sẵn sàng nhận ảnh từ người dùng');
 
                 animate();
                 
@@ -520,146 +518,6 @@
             particleSystem.push(new Particle(group, 'PHOTO', false));
         }
 
-        // Auto-embed ảnh cho web deployment - KHÔNG CẦN FOLDER
-        function loadEmbeddedImagesForWeb() {
-            console.log('🌐 Tải ảnh embedded cho web deployment...');
-            
-            // Bạn có thể thay thế các base64 này bằng ảnh thật của mình
-            const embeddedImages = [
-                // Ảnh 1 - Thay bằng base64 của ảnh thật
-                createChristmasImage('#FF6B6B', 'MERRY', 'CHRISTMAS', 1),
-                // Ảnh 2 - Thay bằng base64 của ảnh thật  
-                createChristmasImage('#4ECDC4', 'HAPPY', 'HOLIDAYS', 2),
-                // Ảnh 3 - Thay bằng base64 của ảnh thật
-                createChristmasImage('#45B7D1', 'JOY TO', 'THE WORLD', 3),
-                // Ảnh 4 - Thay bằng base64 của ảnh thật
-                createChristmasImage('#96CEB4', 'PEACE', 'ON EARTH', 4),
-                // Ảnh 5 - Thay bằng base64 của ảnh thật
-                createChristmasImage('#FFEAA7', 'LOVE &', 'HAPPINESS', 5)
-            ];
-            
-            let loadedCount = 0;
-            
-            embeddedImages.forEach((imageData, index) => {
-                new THREE.TextureLoader().load(
-                    imageData,
-                    (texture) => {
-                        texture.colorSpace = THREE.SRGBColorSpace;
-                        addPhotoToScene(texture);
-                        loadedCount++;
-                        console.log(`✅ Đã tải ảnh ${index + 1} (embedded)`);
-                        
-                        if (loadedCount === embeddedImages.length) {
-                            console.log(`🎄 Hoàn thành! Tải được ${loadedCount} ảnh cho web`);
-                        }
-                    },
-                    undefined,
-                    (error) => {
-                        console.error(`❌ Lỗi tải ảnh ${index + 1}:`, error);
-                        loadedCount++;
-                    }
-                );
-            });
-        }
-
-        // Tạo ảnh Christmas đẹp cho web
-        function createChristmasImage(color, text1, text2, index) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            
-            // Background gradient
-            const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 300);
-            gradient.addColorStop(0, color);
-            gradient.addColorStop(0.7, '#1a1a2e');
-            gradient.addColorStop(1, '#000');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 512, 512);
-            
-            // Christmas decorations - stars
-            ctx.fillStyle = '#FFD700';
-            for(let i = 0; i < 30; i++) {
-                const x = Math.random() * 512;
-                const y = Math.random() * 512;
-                const size = Math.random() * 4 + 2;
-                drawStar(ctx, x, y, size);
-            }
-            
-            // Snowflakes
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            for(let i = 0; i < 20; i++) {
-                const x = Math.random() * 512;
-                const y = Math.random() * 512;
-                ctx.font = `${Math.random() * 20 + 10}px Arial`;
-                ctx.fillText('❄', x, y);
-            }
-            
-            // Main text
-            ctx.fillStyle = '#FFF';
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 3;
-            ctx.font = 'bold 48px Arial';
-            ctx.textAlign = 'center';
-            ctx.strokeText(text1, 256, 200);
-            ctx.fillText(text1, 256, 200);
-            
-            ctx.font = 'bold 42px Arial';
-            ctx.strokeText(text2, 256, 260);
-            ctx.fillText(text2, 256, 260);
-            
-            // Christmas tree
-            drawChristmasTree(ctx, 256, 320);
-            
-            // Border decoration
-            ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 8;
-            ctx.strokeRect(10, 10, 492, 492);
-            
-            return canvas.toDataURL('image/jpeg', 0.9);
-        }
-
-        function drawStar(ctx, x, y, size) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.beginPath();
-            for(let i = 0; i < 5; i++) {
-                ctx.lineTo(Math.cos((18 + i * 72) / 180 * Math.PI) * size, 
-                          -Math.sin((18 + i * 72) / 180 * Math.PI) * size);
-                ctx.lineTo(Math.cos((54 + i * 72) / 180 * Math.PI) * size * 0.5, 
-                          -Math.sin((54 + i * 72) / 180 * Math.PI) * size * 0.5);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-        }
-
-        function drawChristmasTree(ctx, x, y) {
-            // Tree layers
-            ctx.fillStyle = '#228B22';
-            ctx.beginPath();
-            ctx.moveTo(x, y - 60);
-            ctx.lineTo(x - 30, y - 20);
-            ctx.lineTo(x + 30, y - 20);
-            ctx.closePath();
-            ctx.fill();
-            
-            ctx.beginPath();
-            ctx.moveTo(x, y - 40);
-            ctx.lineTo(x - 40, y);
-            ctx.lineTo(x + 40, y);
-            ctx.closePath();
-            ctx.fill();
-            
-            // Trunk
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(x - 8, y, 16, 25);
-            
-            // Star on top
-            ctx.fillStyle = '#FFD700';
-            drawStar(ctx, x, y - 60, 8);
-        }
-        
         function handleImageUpload(e) {
             const files = e.target.files;
             if(!files.length) return;
