@@ -49,7 +49,9 @@
             letter-spacing: 6px; 
             text-shadow: 0 0 50px rgba(252, 238, 167, 0.6); 
             background: linear-gradient(to bottom, #fff, #eebb66);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; 
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
             font-family: 'Cinzel', 'Times New Roman', serif;
             opacity: 0.9;
             transition: opacity 0.5s ease; /* Ensure smooth transitions if needed */
@@ -535,37 +537,66 @@
 
         // --- MEDIAPIPE ---
         async function initMediaPipe() {
-            video = document.getElementById('webcam');
-            webcamCanvas = document.getElementById('webcam-preview');
-            webcamCtx = webcamCanvas.getContext('2d');
-            webcamCanvas.width = 160; webcamCanvas.height = 120;
+            try {
+                video = document.getElementById('webcam');
+                webcamCanvas = document.getElementById('webcam-preview');
+                webcamCtx = webcamCanvas.getContext('2d');
+                webcamCanvas.width = 160; webcamCanvas.height = 120;
 
-            const vision = await FilesetResolver.forVisionTasks(
-                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-            );
-            handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                baseOptions: {
-                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
-                    delegate: "GPU"
-                },
-                runningMode: "VIDEO",
-                numHands: 1
-            });
-            
-            if (navigator.mediaDevices?.getUserMedia) {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-                video.addEventListener("loadeddata", predictWebcam);
+                console.log('🤖 Đang tải MediaPipe...');
+                const vision = await FilesetResolver.forVisionTasks(
+                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+                );
+                handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                        delegate: "GPU"
+                    },
+                    runningMode: "VIDEO",
+                    numHands: 1
+                });
+                console.log('✅ MediaPipe model đã tải');
+                
+                // Thử truy cập camera - KHÔNG BẮT BUỘC
+                if (navigator.mediaDevices?.getUserMedia) {
+                    try {
+                        console.log('📷 Đang yêu cầu quyền camera...');
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        video.srcObject = stream;
+                        video.addEventListener("loadeddata", predictWebcam);
+                        console.log('✅ Camera đã kết nối - có thể điều khiển bằng tay');
+                    } catch (cameraError) {
+                        console.warn('⚠️ Không thể truy cập camera:', cameraError.message);
+                        console.log('ℹ️ Ứng dụng vẫn hoạt động bình thường, chỉ không có điều khiển tay');
+                        // Không throw error - app vẫn chạy được
+                    }
+                } else {
+                    console.log('ℹ️ Browser không hỗ trợ camera - chỉ chế độ xem');
+                }
+            } catch (error) {
+                console.warn('⚠️ Lỗi khởi tạo MediaPipe:', error.message);
+                console.log('ℹ️ Ứng dụng vẫn hoạt động, chỉ không có nhận diện cử chỉ');
+                // Không throw error - app vẫn chạy được
             }
         }
 
         let lastVideoTime = -1;
         async function predictWebcam() {
+            // Kiểm tra xem có video và handLandmarker không
+            if (!video || !handLandmarker || !video.srcObject) {
+                // Nếu không có camera, vẫn tiếp tục loop nhưng không xử lý
+                requestAnimationFrame(predictWebcam);
+                return;
+            }
+            
             if (video.currentTime !== lastVideoTime) {
                 lastVideoTime = video.currentTime;
-                if (handLandmarker) {
+                try {
                     const result = handLandmarker.detectForVideo(video, performance.now());
                     processGestures(result);
+                } catch (error) {
+                    // Bỏ qua lỗi detection để không crash app
+                    console.warn('Lỗi detection:', error.message);
                 }
             }
             requestAnimationFrame(predictWebcam);
