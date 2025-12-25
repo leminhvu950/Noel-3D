@@ -12,6 +12,7 @@ Tương tác mượt mà với hiệu ứng ánh sáng & bloom cao cấp
 
 📁 Cấu trúc dự án
 /
+
 ├── index.html      # File chính (mở trực tiếp trên trình duyệt)
 
 └── README.md       # Hướng dẫn sử dụng (file này)
